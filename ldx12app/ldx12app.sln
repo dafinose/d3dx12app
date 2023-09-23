@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34031.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ldx12app", "ldx12app.vcxproj", "{80668208-435E-4973-8A22-A24DC04EA05B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{80668208-435E-4973-8A22-A24DC04EA05B}.Debug|x64.ActiveCfg = Debug|x64
+		{80668208-435E-4973-8A22-A24DC04EA05B}.Debug|x64.Build.0 = Debug|x64
+		{80668208-435E-4973-8A22-A24DC04EA05B}.Release|x64.ActiveCfg = Release|x64
+		{80668208-435E-4973-8A22-A24DC04EA05B}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F9F0D840-4740-45B0-B110-7B51F3CF0A32}
+	EndGlobalSection
+EndGlobal

@@ -30,3 +30,4 @@
 *.exe
 *.out
 *.app
+/ldx12app/.vs/ldx12app/v16/Browse.VC.opendb
