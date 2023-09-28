@@ -263,6 +263,84 @@ bool InitD3D()
         return false;
     }
 
+    // Create the command queue
+    D3D12_COMMAND_QUEUE_DESC cqDesc = {}; // all default values
+
+    hr = device->CreateCommandQueue(&cqDesc, IID_PPV_ARGS(&commandQueue)); // create CQ
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    // Create the swap chain (with triple buffering)
+    DXGI_MODE_DESC backBufferDesc = {};
+    backBufferDesc.Width = Width;
+    backBufferDesc.Height = Height;
+    backBufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    // describe multi-sampling (no multi-sampling in this case, therefore -> 1)
+    DXGI_SAMPLE_DESC sampleDesc = {};
+    sampleDesc.Count = 1;
+
+    // describe and create the swap chain
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+    swapChainDesc.BufferCount = frameBufferCount;                // number of buffers used
+    swapChainDesc.BufferDesc = backBufferDesc;                   // back buffer description
+    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // pipeline will render this to the swapchain
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;    // dxgi wil discard the buffer (data) after present is called
+    swapChainDesc.OutputWindow = hwnd;                           // handle to the window
+    swapChainDesc.SampleDesc = sampleDesc;                       // multi-sampling description
+    swapChainDesc.Windowed = !FullScreen;
+
+    IDXGISwapChain* tempSwapChain;
+
+    dxgiFactory->CreateSwapChain(
+        commandQueue,   // the queue will be flushed once the swap chain is created
+        &swapChainDesc, // the swap chain description created above
+        &tempSwapChain  // store the created swap chain in a temporary interface
+    );
+
+    swapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
+
+    frameIndex = swapChain->GetCurrentBackBufferIndex();
+
+    // create the back buffers (render target views) descriptor heap
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+    rtvHeapDesc.NumDescriptors = frameBufferCount; // number of descriptors for this heap
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+
+    // the heap will not be referenced by the shaders (not shader visible)
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    hr = device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvDescriptorHeap));
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    // get the size of the descriptor in this heap (this may vary depending on device hence we ask the device for the size)
+    // size will be used to increment a descriptor handle offset
+    rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    // get a handle to the first descriptor in the heap.
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+    // create a RTV for each buffer
+    for (int i = 0; i < frameBufferCount; i++)
+    {
+        // get buffer i in the swap chain and store it at position i in the ID3D12Resource array
+        hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[i]));
+        if (FAILED(hr))
+        {
+            return false;
+        }
+
+        // then create a render target view which binds the swapchain buffer to the rtv handle
+        device->CreateRenderTargetView(renderTargets[i], nullptr, rtvHandle);
+
+        // increment the rtv handle by the rtv descriptor size from above
+        rtvHandle.Offset(1, rtvDescriptorSize);
+    }
+
     return 0;
 }
 
