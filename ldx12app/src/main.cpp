@@ -41,7 +41,7 @@ ID3D12Resource* renderTargets[frameBufferCount]; // number of render targets (eq
 
 ID3D12CommandAllocator* commandAllocator[frameBufferCount]; // enough allocators for each buffer x number of threads (3 here since only 1 thread)
 
-ID3D12CommandList* commandList; // a command list that commands can be recorded into, then be executed frame by frame
+ID3D12GraphicsCommandList* commandList; // a command list that commands can be recorded into, then be executed frame by frame
 
 ID3D12Fence* fence[frameBufferCount]; // an object that is locked while the command list is being executed by the GPU
 
@@ -341,15 +341,61 @@ bool InitD3D()
         rtvHandle.Offset(1, rtvDescriptorSize);
     }
 
-    return 0;
+    // create the command allocators
+    for (int i = 0; i < frameBufferCount; i++)
+    {
+        hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator[i]));
+        if (FAILED(hr))
+        {
+            return false;
+        }
+    }
+
+    // create the command list with the first allocator
+    hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator[0], NULL, IID_PPV_ARGS(&commandList));
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    // command lists are created in the recording state so close it for now as it will be set to recording later when needed
+    commandList->Close();
+
+    // create a fence and fence event
+
+    // create the fences
+    for (int i = 0; i < frameBufferCount; i++)
+    {
+        hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence[i]));
+        if (FAILED(hr))
+        {
+            return false;
+        }
+        fenceValue[i] = 0; // set the initial fence value to 0;
+    }
+
+    // create a handle to a fence handle
+    fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (fenceEvent == nullptr)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void Update()
 {
+    // update app logic, such as moving the camera or figuring out what objects are in view
 }
 
+// This function is where commands will be added to the command list, which include changing the state of the render target, 
+// setting the root signature and clearing the render target.
+// later vertex buffers will be set and draw will be called in this function.
 void UpdatePipeline()
 {
+    HRESULT hr;
+
 }
 
 void Render()
